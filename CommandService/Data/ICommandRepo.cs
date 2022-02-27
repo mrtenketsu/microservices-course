@@ -8,4 +8,6 @@ public interface ICommandRepo
     Command GetCommand(int platformId, int commandId);
     void CreateCommand(int platformId, Command command);
 
+    bool SaveChanges();
+
 }
