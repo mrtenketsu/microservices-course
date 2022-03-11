@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using PlatformService.AsyncDataServices;
 using PlatformService.Data;
 using PlatformService.Settings;
 using PlatformService.SyncDataServices.Http;
@@ -13,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
 services.AddSingleton(sp => sp.GetSettings<UrlSettings>());
+services.AddSingleton(sp => sp.GetSettings<RabbitMqMessageBusSettings>());
 
 
 // Add services to the container.
@@ -34,6 +36,8 @@ services.AddHttpClient<ICommandDataClient, HttpCommandDataClient>((sp, cnf) =>
     var urlSettings = sp.GetService<UrlSettings>();
     cnf.BaseAddress = new Uri(urlSettings.CommandServiceBaseUrl);
 });
+
+services.AddSingleton<IMessageBusClient, RabbitMqMessageBusClient>();
 
 services.AddScoped<IPlatformRepo, PlatformRepo>();
 
