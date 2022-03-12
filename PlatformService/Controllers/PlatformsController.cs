@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
+using MessageBus;
 using Microsoft.AspNetCore.Mvc;
-using PlatformService.AsyncDataServices;
 using PlatformService.Data;
 using PlatformService.Dtos;
 using PlatformService.Model;
@@ -16,7 +16,7 @@ namespace PlatformService.Controllers;
 public class PlatformsController : ControllerBase
 {
     private readonly ICommandDataClient commandDataClient;
-    private readonly IMessageBusClient messageBusClient;
+    private readonly IMessageBusPublisher messageBusPublisher;
     private readonly IMapper mapper;
     private readonly IPlatformRepo platformRepo;
 
@@ -24,12 +24,12 @@ public class PlatformsController : ControllerBase
         IPlatformRepo platformRepo,
         IMapper mapper,
         ICommandDataClient commandDataClient,
-        IMessageBusClient messageBusClient)
+        IMessageBusPublisher messageBusPublisher)
     {
         this.platformRepo = platformRepo;
         this.mapper = mapper;
         this.commandDataClient = commandDataClient;
-        this.messageBusClient = messageBusClient;
+        this.messageBusPublisher = messageBusPublisher;
     }
 
     [HttpGet]
@@ -76,7 +76,7 @@ public class PlatformsController : ControllerBase
         try
         {
             var publishDto = mapper.Map<PlatformPublishedDto>(platform);
-            messageBusClient.Publish(publishDto);
+            messageBusPublisher.Publish(publishDto);
         }
         catch (Exception ex)
         {

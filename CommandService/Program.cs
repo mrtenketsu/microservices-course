@@ -1,4 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
 using CommandService.Data;
+using CommandService.Dtos;
+using CommandService.MessageHandlers;
+using MessageBus;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel;
 using Microsoft.EntityFrameworkCore;
@@ -6,11 +10,24 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
+var services = builder.Services;
 
 // Add services to the container.
 
+// Settings
+services.AddSingleton(sp => sp.GetSettings<RabbitMqMessageBusSettings>());
+
+// Message bus
+services.AddSingleton<IMessageBusSubscriptionManager, MessageBusSubscriptionsManager>();
+services.AddSingleton<IMessageBusListener, RabbitMqMessageBusListener>();
+services.AddHostedService<MessageBusService>();
+
+// Message bus message handlers
+services.AddScoped<PlatformPublishedHandler>();
+
+// Database and repositories
 const string DATABASE_CONNECTION_STRING_NAME = "CommandsConn";
-builder.Services.AddDbContext<AppDbContext>((sp, opt) =>
+services.AddDbContext<AppDbContext>((sp, opt) =>
 {
     var configuration = sp.GetService<IConfiguration>();
     var connectionString = configuration.GetConnectionString(DATABASE_CONNECTION_STRING_NAME);
@@ -18,16 +35,17 @@ builder.Services.AddDbContext<AppDbContext>((sp, opt) =>
     opt.UseSqlServer(connectionString);
 });
 
-builder.Services.AddScoped<IPlatformRepo, PlatformRepo>();
-builder.Services.AddScoped<ICommandRepo, CommandRepo>();
+services.AddScoped<IPlatformRepo, PlatformRepo>();
+services.AddScoped<ICommandRepo, CommandRepo>();
 
-builder.Services.AddControllers();
+// ASP.NET stuff
+services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+services.AddEndpointsApiExplorer();
+services.AddSwaggerGen();
 
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
+// AutoMapper
+services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 var app = builder.Build();
 
@@ -46,4 +64,26 @@ app.MapControllers();
 
 PrepDb.PrepPopulation(app);
 
+// Configure message bus handlers
+var messageBusListener = app.Services.GetService<IMessageBusListener>();
+messageBusListener.Subscribe<PlatformPublishedHandler, PlatformPublishedDto>();
+
+// run the app
 app.Run();
+
+public static class StartupExtensions
+{
+    [SuppressMessage("ReSharper", "HeapView.PossibleBoxingAllocation")]
+    public static TSettings GetSettings<TSettings>(this IServiceProvider sp)
+        where TSettings : new()
+    {
+        var configuration = sp.GetService<IConfiguration>();
+
+        TSettings settings = new();
+        var settingName = settings.GetType().Name;
+
+        configuration.Bind(settingName, settings);
+
+        return settings;
+    }
+}

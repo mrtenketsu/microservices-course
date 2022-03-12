@@ -1,11 +1,11 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using MessageBus;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using PlatformService.AsyncDataServices;
 using PlatformService.Data;
 using PlatformService.Settings;
 using PlatformService.SyncDataServices.Http;
@@ -37,7 +37,7 @@ services.AddHttpClient<ICommandDataClient, HttpCommandDataClient>((sp, cnf) =>
     cnf.BaseAddress = new Uri(urlSettings.CommandServiceBaseUrl);
 });
 
-services.AddSingleton<IMessageBusClient, RabbitMqMessageBusClient>();
+services.AddSingleton<IMessageBusPublisher, RabbitMqMessageBusPublisher>();
 
 services.AddScoped<IPlatformRepo, PlatformRepo>();
 

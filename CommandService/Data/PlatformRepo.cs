@@ -26,4 +26,9 @@ public class PlatformRepo : BaseRepo, IPlatformRepo
     {
         return Context.Platforms.Any(p => p.Id == platformId);
     }
+
+    public bool ExternalPlatformExist(int externalPlatformId)
+    {
+        return Context.Platforms.Any(p => p.ExternalId == externalPlatformId);
+    }
 }

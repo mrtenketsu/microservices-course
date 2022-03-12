@@ -1,17 +1,16 @@
 using System.Text;
 using System.Text.Json;
-using PlatformService.Settings;
 using RabbitMQ.Client;
 
-namespace PlatformService.AsyncDataServices;
+namespace MessageBus;
 
-public class RabbitMqMessageBusClient : IMessageBusClient, IDisposable
+public class RabbitMqMessageBusPublisher : IMessageBusPublisher, IDisposable
 {
     private readonly RabbitMqMessageBusSettings settings;
     private readonly IConnection connection;
     private readonly IModel channel;
 
-    public RabbitMqMessageBusClient(RabbitMqMessageBusSettings settings)
+    public RabbitMqMessageBusPublisher(RabbitMqMessageBusSettings settings)
     {
         this.settings = settings;
 
@@ -39,31 +38,31 @@ public class RabbitMqMessageBusClient : IMessageBusClient, IDisposable
             Console.WriteLine($"--> Could not connect to RabbitMq message bus: {ex.Message}");
         }
     }
-
-    private void OnConnectionShutdown(object sender, ShutdownEventArgs e)
+    
+    public void Publish(object message)
     {
-        Console.WriteLine($"--> RabbitMq message bus connection shutdown, cause: {e.Cause}");
-    }
-
-    public void Publish(object dto)
-    {
-        var messageType = dto.GetType().Name;
-        var message = JsonSerializer.Serialize(dto);
+        var messageType = message.GetType().Name;
+        var messageJson = JsonSerializer.Serialize(message);
         
         if (connection.IsOpen)
         {
             Console.WriteLine("--> RabbitMq message bus connection is open, sending message...");
-            SendMessage(message, messageType);
+            PublishInternal(messageJson, messageType);
         }
         else
         {
             Console.WriteLine("--> RabbitMq message bus connection is closed, not sending message");
         }
     }
-
-    private void SendMessage(string message, string messageType)
+    
+    private void OnConnectionShutdown(object sender, ShutdownEventArgs e)
     {
-        var body = Encoding.UTF8.GetBytes(message);
+        Console.WriteLine($"--> RabbitMq message bus connection shutdown, cause: {e.Cause}");
+    }
+
+    private void PublishInternal(string messageJson, string messageType)
+    {
+        var body = Encoding.UTF8.GetBytes(messageJson);
 
         var props = channel.CreateBasicProperties();
         props.Persistent = true;
@@ -75,7 +74,7 @@ public class RabbitMqMessageBusClient : IMessageBusClient, IDisposable
 
     public void Dispose()
     {
-        Console.WriteLine("--> RabbitMq message bus client disposing");
+        Console.WriteLine("--> RabbitMq message bus publisher disposing");
 
         if (channel?.IsOpen == true)
         {
@@ -86,6 +85,6 @@ public class RabbitMqMessageBusClient : IMessageBusClient, IDisposable
         channel?.Dispose();
         connection?.Dispose();
         
-        Console.WriteLine("--> RabbitMq message bus client disposed");
+        Console.WriteLine("--> RabbitMq message bus publisher disposed");
     }
 }
