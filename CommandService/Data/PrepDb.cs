@@ -4,26 +4,28 @@ using Microsoft.EntityFrameworkCore;
 namespace CommandService.Data;
 
 [SuppressMessage("ReSharper", "InvertIf")]
-public static class PrepDb
+public class PrepDb
 {
     public static void PrepPopulation(IApplicationBuilder app)
     {
         using var serviceScope = app.ApplicationServices.CreateScope();
-        SeedData(serviceScope.ServiceProvider.GetService<AppDbContext>());
+        SeedData(
+            serviceScope.ServiceProvider.GetService<AppDbContext>(),
+            serviceScope.ServiceProvider.GetService<ILogger<PrepDb>>());
     }
 
-    private static void SeedData(AppDbContext context)
+    private static void SeedData(AppDbContext context, ILogger logger)
     {
         if (context.Database.IsSqlServer())
         {
-            Console.WriteLine("--> Attempting to apply migrations...");
+            logger.LogInformation("Attempting to apply migrations...");
             try
             {
                 context.Database.Migrate();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"--> Could not run migrations: {ex.Message}");
+                logger.LogError(ex, "Could not run migrations: {Message}", ex.Message);
             }
         }
     }

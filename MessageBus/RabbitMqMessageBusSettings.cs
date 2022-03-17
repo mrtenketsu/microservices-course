@@ -1,6 +1,6 @@
 namespace MessageBus;
 
-public class RabbitMqMessageBusSettings
+public class RabbitMqMessageBusSettings : IRabbitMqMessageBusSettings
 {
     public string Host { get; set; }
     public int Port { get; set; }

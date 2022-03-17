@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using AutoMapper;
 using MessageBus;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +14,7 @@ public class PlatformsController : ControllerBase
 {
     private readonly ICommandDataClient commandDataClient;
     private readonly IMessageBusPublisher messageBusPublisher;
+    private readonly ILogger<PlatformsController> logger;
     private readonly IMapper mapper;
     private readonly IPlatformRepo platformRepo;
 
@@ -24,12 +22,14 @@ public class PlatformsController : ControllerBase
         IPlatformRepo platformRepo,
         IMapper mapper,
         ICommandDataClient commandDataClient,
-        IMessageBusPublisher messageBusPublisher)
+        IMessageBusPublisher messageBusPublisher,
+        ILogger<PlatformsController> logger)
     {
         this.platformRepo = platformRepo;
         this.mapper = mapper;
         this.commandDataClient = commandDataClient;
         this.messageBusPublisher = messageBusPublisher;
+        this.logger = logger;
     }
 
     [HttpGet]
@@ -70,7 +70,7 @@ public class PlatformsController : ControllerBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"--> Could not send synchronously: {ex.Message}");
+            logger.LogError(ex, "Could not send synchronously: {Message}", ex.Message);
         }
         
         try
@@ -80,7 +80,7 @@ public class PlatformsController : ControllerBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"--> Could not send asynchronously: {ex.Message}");
+            logger.LogError(ex, "Could not send asynchronously: {Message}", ex.Message);
         }
 
         return CreatedAtRoute(nameof(GetPlatformById), new {platform.Id}, readDto);

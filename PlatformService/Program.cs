@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using NLog.Web;
 using PlatformService.Data;
 using PlatformService.Settings;
 using PlatformService.SyncDataServices.Http;
@@ -14,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
 services.AddSingleton(sp => sp.GetSettings<UrlSettings>());
-services.AddSingleton(sp => sp.GetSettings<RabbitMqMessageBusSettings>());
+services.AddSingleton<IRabbitMqMessageBusSettings>(sp => sp.GetSettings<RabbitMqMessageBusSettings>());
 
 
 // Add services to the container.
@@ -42,6 +43,8 @@ services.AddSingleton<IMessageBusPublisher, RabbitMqMessageBusPublisher>();
 services.AddScoped<IPlatformRepo, PlatformRepo>();
 
 services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+builder.Host.UseNLog();
 
 var app = builder.Build();
 

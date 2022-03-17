@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationM
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using NLog.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -15,7 +16,7 @@ var services = builder.Services;
 // Add services to the container.
 
 // Settings
-services.AddSingleton(sp => sp.GetSettings<RabbitMqMessageBusSettings>());
+services.AddSingleton<IRabbitMqMessageBusSettings>(sp => sp.GetSettings<RabbitMqMessageBusSettings>());
 
 // Message bus
 services.AddSingleton<IMessageBusSubscriptionManager, MessageBusSubscriptionsManager>();
@@ -46,6 +47,8 @@ services.AddSwaggerGen();
 
 // AutoMapper
 services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+builder.Host.UseNLog();
 
 var app = builder.Build();
 

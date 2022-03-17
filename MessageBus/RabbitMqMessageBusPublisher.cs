@@ -1,20 +1,23 @@
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 
 namespace MessageBus;
 
 public class RabbitMqMessageBusPublisher : IMessageBusPublisher, IDisposable
 {
-    private readonly RabbitMqMessageBusSettings settings;
+    private readonly IRabbitMqMessageBusSettings settings;
+    private readonly ILogger<RabbitMqMessageBusPublisher> logger;
     private readonly IConnection connection;
     private readonly IModel channel;
 
-    public RabbitMqMessageBusPublisher(RabbitMqMessageBusSettings settings)
+    public RabbitMqMessageBusPublisher(IRabbitMqMessageBusSettings settings, ILogger<RabbitMqMessageBusPublisher> logger)
     {
         this.settings = settings;
+        this.logger = logger;
 
-        Console.WriteLine($"--> RabbitMq message bus client, attempting to connect {settings.Host}:{settings.Port}");
+        logger.LogInformation("RabbitMq message bus client, attempting to connect {Host}:{Port}", settings.Host, settings.Port);
         
         var factory = new ConnectionFactory()
         {
@@ -31,11 +34,11 @@ public class RabbitMqMessageBusPublisher : IMessageBusPublisher, IDisposable
             
             connection.ConnectionShutdown += OnConnectionShutdown;
             
-            Console.WriteLine($"--> Connected to RabbitMq message bus");
+            logger.LogInformation("Connected to RabbitMq message bus");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"--> Could not connect to RabbitMq message bus: {ex.Message}");
+            logger.LogError("Could not connect to RabbitMq message bus: {Message}", ex.Message);
         }
     }
     
@@ -46,18 +49,18 @@ public class RabbitMqMessageBusPublisher : IMessageBusPublisher, IDisposable
         
         if (connection.IsOpen)
         {
-            Console.WriteLine("--> RabbitMq message bus connection is open, sending message...");
+            logger.LogDebug("RabbitMq message bus connection is open, sending message of type {messageType}...", messageType);
             PublishInternal(messageJson, messageType);
         }
         else
         {
-            Console.WriteLine("--> RabbitMq message bus connection is closed, not sending message");
+            logger.LogWarning("RabbitMq message bus connection is closed, not sending message of type {messageType}", messageType);
         }
     }
     
     private void OnConnectionShutdown(object sender, ShutdownEventArgs e)
     {
-        Console.WriteLine($"--> RabbitMq message bus connection shutdown, cause: {e.Cause}");
+        logger.LogWarning("RabbitMq message bus connection shutdown, cause: {Cause}", e.Cause);
     }
 
     private void PublishInternal(string messageJson, string messageType)
@@ -69,12 +72,12 @@ public class RabbitMqMessageBusPublisher : IMessageBusPublisher, IDisposable
         
         channel.BasicPublish(settings.Exchange, messageType, props, body);
         
-        Console.WriteLine("--> RabbitMq message bus message sent");
+        logger.LogDebug("RabbitMq message bus message of type {messageType} sent", messageType);
     }
 
     public void Dispose()
     {
-        Console.WriteLine("--> RabbitMq message bus publisher disposing");
+        logger.LogDebug("RabbitMq message bus publisher disposing");
 
         if (channel?.IsOpen == true)
         {
@@ -85,6 +88,6 @@ public class RabbitMqMessageBusPublisher : IMessageBusPublisher, IDisposable
         channel?.Dispose();
         connection?.Dispose();
         
-        Console.WriteLine("--> RabbitMq message bus publisher disposed");
+        logger.LogDebug("RabbitMq message bus publisher disposed");
     }
 }

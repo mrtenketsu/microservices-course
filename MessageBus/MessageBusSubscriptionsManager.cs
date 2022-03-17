@@ -1,15 +1,26 @@
+using Microsoft.Extensions.Logging;
+
 namespace MessageBus;
 
 public class MessageBusSubscriptionsManager : IMessageBusSubscriptionManager
 {
+    private readonly ILogger<MessageBusSubscriptionsManager> logger;
     private readonly Dictionary<string, List<Type>> handlers = new();
     private readonly Dictionary<string, Type> messageTypes = new();
 
+    public MessageBusSubscriptionsManager(ILogger<MessageBusSubscriptionsManager> logger)
+    {
+        this.logger = logger;
+    }
+    
     public void AddMessageHandler<TMessageHandler, TMessage>() where TMessageHandler : class, IMessageHandler<TMessage>
     {
+        
         var messageType = typeof(TMessage);
         var messageTypeName = messageType.Name;
         var handlerType = typeof(TMessageHandler);
+        
+        logger.LogInformation("Adding message type {0} handler {1}", messageType.Name, handlerType.Name);
 
         if (!messageTypes.ContainsKey(messageTypeName))
             messageTypes.Add(messageTypeName, messageType);

@@ -12,19 +12,22 @@ public class PlatformsController : ControllerBase
 {
     private readonly IPlatformRepo platformRepo;
     private readonly IMapper mapper;
+    private readonly ILogger<PlatformsController> logger;
 
     public PlatformsController(
         IPlatformRepo platformRepo,
-        IMapper mapper)
+        IMapper mapper,
+        ILogger<PlatformsController> logger)
     {
         this.platformRepo = platformRepo;
         this.mapper = mapper;
+        this.logger = logger;
     }
     
     [HttpGet]
     public ActionResult<IEnumerable<PlatformReadDto>> GetPlatforms()
     {
-        Console.WriteLine("--> Getting platforms from Command Service");
+        logger.LogDebug("Getting platforms from Command Service");
         
         var platforms = platformRepo.GetAllPlatforms();
         var dtos = mapper.Map<IEnumerable<PlatformReadDto>>(platforms);
@@ -36,7 +39,7 @@ public class PlatformsController : ControllerBase
     [HttpPost]
     public ActionResult TestInboundConnection()
     {
-        Console.WriteLine("--> Inbound POST # Command Service");
+        logger.LogInformation("Inbound POST # Command Service");
 
         return Ok("Inbound test of from Platforms Controller");
     }

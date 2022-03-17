@@ -13,21 +13,24 @@ public class CommandsController : ControllerBase
     private readonly ICommandRepo commandRepo;
     private readonly IPlatformRepo platformRepo;
     private readonly IMapper mapper;
+    private readonly ILogger<CommandsController> logger;
 
     public CommandsController(
         ICommandRepo commandRepo,
         IPlatformRepo platformRepo,
-        IMapper mapper)
+        IMapper mapper,
+        ILogger<CommandsController> logger)
     {
         this.commandRepo = commandRepo;
         this.platformRepo = platformRepo;
         this.mapper = mapper;
+        this.logger = logger;
     }
 
     [HttpGet]
     public ActionResult<IEnumerable<CommandReadDto>> GetCommandsForPlatform(int platformId)
     {
-        Console.WriteLine($"--> Getting commands for platform {platformId}");
+        logger.LogDebug("Getting commands for platform {platformId}", platformId);
 
         if (!platformRepo.PlatformExist(platformId))
             return NotFound();
@@ -42,7 +45,7 @@ public class CommandsController : ControllerBase
     public ActionResult<CommandReadDto> GetCommandForPlatform(
         int platformId, int commandId)
     {
-        Console.WriteLine($"--> Getting command {commandId} for platform {platformId}");
+        logger.LogDebug("Getting command {commandId} for platform {platformId}", commandId, platformId);
 
         if (!platformRepo.PlatformExist(platformId))
             return NotFound();
@@ -61,7 +64,7 @@ public class CommandsController : ControllerBase
         int platformId,
         [FromBody] CommandCreateDto createDto)
     {
-        Console.WriteLine($"--> Creating command for platform {platformId}");
+        logger.LogInformation("Creating command for platform {platformId}", platformId);
 
         if (!platformRepo.PlatformExist(platformId))
             return NotFound();

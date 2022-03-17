@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
@@ -10,17 +11,23 @@ public class RabbitMqMessageBusListener : IMessageBusListener, IDisposable
 {
     private readonly IServiceProvider serviceProvider;
     private readonly IMessageBusSubscriptionManager subscriptionManager;
-    private readonly RabbitMqMessageBusSettings settings;
+    private readonly IRabbitMqMessageBusSettings settings;
+    private readonly ILogger<RabbitMqMessageBusListener> logger;
     private readonly IConnection connection;
     private readonly IModel channel;
 
-    public RabbitMqMessageBusListener(IServiceProvider serviceProvider, IMessageBusSubscriptionManager subscriptionManager, RabbitMqMessageBusSettings settings)
+    public RabbitMqMessageBusListener(
+        IServiceProvider serviceProvider,
+        IMessageBusSubscriptionManager subscriptionManager,
+        IRabbitMqMessageBusSettings settings,
+        ILogger<RabbitMqMessageBusListener> logger)
     {
         this.serviceProvider = serviceProvider;
         this.subscriptionManager = subscriptionManager;
         this.settings = settings;
+        this.logger = logger;
 
-        Console.WriteLine($"--> Attempting to connect {settings.Host}:{settings.Port}");
+        logger.LogInformation("Attempting to connect {Host}:{Port}", settings.Host, settings.Port);
         
         var factory = new ConnectionFactory()
         {
@@ -43,17 +50,17 @@ public class RabbitMqMessageBusListener : IMessageBusListener, IDisposable
             
             connection.ConnectionShutdown += OnConnectionShutdown;
             
-            Console.WriteLine($"--> Connected to RabbitMq message bus");
+            logger.LogInformation("Connected to RabbitMq message bus");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"--> Could not connect to RabbitMq message bus: {ex.Message}");
+            logger.LogError(ex, "Could not connect to RabbitMq message bus: {Message}", ex.Message);
         }
     }
 
     private void OnConnectionShutdown(object sender, ShutdownEventArgs e)
     {
-        Console.WriteLine($"--> Connection shutdown, cause: {e.Cause}");
+        logger.LogWarning("Connection shutdown, cause: {Cause}", e.Cause);
     }
 
     public void Subscribe<TMessageHandler, TMessage>() where TMessageHandler : class, IMessageHandler<TMessage>
@@ -64,7 +71,7 @@ public class RabbitMqMessageBusListener : IMessageBusListener, IDisposable
 
         if (subscriptionManager.IsMessageTypeRegistered(messageTypeName))
         {
-            Console.WriteLine("--> Subscribing to message {0} with {1}", messageTypeName, typeof(TMessageHandler).Name);
+            logger.LogInformation("Subscribing to message {messageTypeName} with {Name}", messageTypeName, typeof(TMessageHandler).Name);
             
             channel.QueueBind(queue: settings.Queue,
                 exchange: settings.Exchange,
@@ -76,7 +83,7 @@ public class RabbitMqMessageBusListener : IMessageBusListener, IDisposable
     {
         if (channel == null)
         {
-            Console.WriteLine("--> Can't start receiving, consumer channel is not created");
+            logger.LogWarning("Can't start receiving, consumer channel is not created");
             return;
         }
         StartBasicConsume();
@@ -84,7 +91,7 @@ public class RabbitMqMessageBusListener : IMessageBusListener, IDisposable
 
     public void Dispose()
     {
-        Console.WriteLine("--> RabbitMq message bus listener disposing");
+        logger.LogDebug("RabbitMq message bus listener disposing");
 
         if (channel?.IsOpen == true)
         {
@@ -95,12 +102,12 @@ public class RabbitMqMessageBusListener : IMessageBusListener, IDisposable
         channel?.Dispose();
         connection?.Dispose();
         
-        Console.WriteLine("--> RabbitMq message bus listener disposed");
+        logger.LogDebug("RabbitMq message bus listener disposed");
     }
 
     private void StartBasicConsume()
     {
-        Console.WriteLine("--> Starting basic consume");
+        logger.LogInformation("Starting basic consume");
 
         if (channel != null)
         {
@@ -126,7 +133,7 @@ public class RabbitMqMessageBusListener : IMessageBusListener, IDisposable
         }
         catch (Exception ex)
         {
-            Console.WriteLine("--> Error processing message {0}: {1}", message, ex.Message);
+            logger.LogError(ex, "--> Error processing message {message}: {Message}", message, ex.Message);
         }
         
         channel.BasicAck(args.DeliveryTag, multiple: false);
@@ -137,7 +144,7 @@ public class RabbitMqMessageBusListener : IMessageBusListener, IDisposable
         if (!subscriptionManager.IsMessageTypeRegistered(messageTypeName))
             return;
 
-        Console.WriteLine("--> Handling message {0}: {1}", messageTypeName, messageJson);
+        logger.LogDebug("Handling message {messageTypeName}: {messageJson}", messageTypeName, messageJson);
         var messageType = subscriptionManager.GetMessageType(messageTypeName);
         var message = JsonSerializer.Deserialize(messageJson, messageType);
         

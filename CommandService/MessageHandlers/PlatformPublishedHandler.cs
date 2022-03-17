@@ -10,11 +10,13 @@ public class PlatformPublishedHandler : IMessageHandler<PlatformPublishedDto>
 {
     private readonly IPlatformRepo platformRepo;
     private readonly IMapper mapper;
+    private readonly ILogger<PlatformPublishedHandler> logger;
 
-    public PlatformPublishedHandler(IPlatformRepo platformRepo, IMapper mapper)
+    public PlatformPublishedHandler(IPlatformRepo platformRepo, IMapper mapper, ILogger<PlatformPublishedHandler> logger)
     {
         this.platformRepo = platformRepo;
         this.mapper = mapper;
+        this.logger = logger;
     }
     
     public Task HandleMessage(PlatformPublishedDto dto)
@@ -28,9 +30,9 @@ public class PlatformPublishedHandler : IMessageHandler<PlatformPublishedDto>
         var saved = platformRepo.SaveChanges();
 
         if (saved)
-            Console.WriteLine("--> Created platform, name {0}, external id {1}, id {2}", plat.Name, plat.ExternalId, plat.Id);
+            logger.LogInformation("Created platform, name {Name}, external id {ExternalId}, id {Id}", plat.Name, plat.ExternalId, plat.Id);
         else
-            Console.WriteLine("--> Failed to create a platform, name {0}, external id {1}", plat.Name, plat.ExternalId);
+            logger.LogWarning("Failed to create a platform, name {Name}, external id {ExternalId}", plat.Name, plat.ExternalId);
 
         return Task.CompletedTask;
     }
