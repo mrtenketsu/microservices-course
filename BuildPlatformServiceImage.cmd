@@ -1,0 +1,1 @@
+docker build -f PlatformService\Dockerfile -t mrtenketsu/platform-service .

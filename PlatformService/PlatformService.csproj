@@ -4,6 +4,8 @@
         <TargetFramework>net6.0</TargetFramework>
         <Nullable>disable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>3b2e15cc-57ad-4c82-b6ea-54f4c0bbea5c</UserSecretsId>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
     <ItemGroup>
@@ -15,6 +17,7 @@
         </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="6.0.1" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.1" />
+        <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.14.0" />
         <PackageReference Include="NLog" Version="4.7.14" />
         <PackageReference Include="NLog.Web.AspNetCore" Version="4.14.0" />
         <PackageReference Include="RabbitMQ.Client" Version="6.2.4" />
