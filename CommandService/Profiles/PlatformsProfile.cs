@@ -14,5 +14,10 @@ public class PlatformsProfile : Profile
         CreateMap<PlatformPublishedDto, Platform>()
             .ForMember(dst => dst.ExternalId, opt => opt.MapFrom(src => src.Id))
             .ForMember(dst => dst.Id, opt => opt.Ignore());
+        CreateMap<GrpcPlatformModel, Platform>()
+            .ForMember(dest => dest.ExternalId, opt => opt.MapFrom(src => src.PlatformId))
+            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+            .ForMember(dst => dst.Commands, opt => opt.Ignore())
+            .ForMember(dst => dst.Id, opt => opt.Ignore());
     }
 }

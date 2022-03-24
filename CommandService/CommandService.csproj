@@ -10,6 +10,12 @@
 
     <ItemGroup>
         <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="11.0.0" />
+        <PackageReference Include="Google.Protobuf" Version="3.19.4" />
+        <PackageReference Include="Grpc.Net.Client" Version="2.44.0" />
+        <PackageReference Include="Grpc.Tools" Version="2.44.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.2" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.2">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -26,6 +32,10 @@
 
     <ItemGroup>
       <ProjectReference Include="..\MessageBus\MessageBus.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Protobuf Include="Protos\platform.proto" GrpcServices="Client" />
     </ItemGroup>
 
 </Project>

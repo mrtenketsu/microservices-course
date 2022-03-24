@@ -10,6 +10,7 @@
 
     <ItemGroup>
         <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
+        <PackageReference Include="Grpc.AspNetCore" Version="2.44.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.1" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.1">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -28,4 +29,8 @@
       <ProjectReference Include="..\MessageBus\MessageBus.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <Protobuf Include="Protos/platform.proto" GrpcServices="Server" />
+    </ItemGroup>
+    
 </Project>

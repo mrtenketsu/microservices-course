@@ -2,6 +2,8 @@ using System.Diagnostics.CodeAnalysis;
 using CommandService.Data;
 using CommandService.Dtos;
 using CommandService.MessageHandlers;
+using CommandService.Settings;
+using CommandService.SyncDataServices.Grpc;
 using MessageBus;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel;
@@ -17,6 +19,7 @@ var services = builder.Services;
 
 // Settings
 services.AddSingleton<IRabbitMqMessageBusSettings>(sp => sp.GetSettings<RabbitMqMessageBusSettings>());
+services.AddSingleton(sp => sp.GetSettings<GrpcSettings>());
 
 // Message bus
 services.AddSingleton<IMessageBusSubscriptionManager, MessageBusSubscriptionsManager>();
@@ -38,6 +41,7 @@ services.AddDbContext<AppDbContext>((sp, opt) =>
 
 services.AddScoped<IPlatformRepo, PlatformRepo>();
 services.AddScoped<ICommandRepo, CommandRepo>();
+services.AddScoped<IPlatformDataClient, PlatformDataClient>();
 
 // ASP.NET stuff
 services.AddControllers();

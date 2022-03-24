@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using NLog.Web;
 using PlatformService.Data;
 using PlatformService.Settings;
+using PlatformService.SyncDataServices.Grpc;
 using PlatformService.SyncDataServices.Http;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +24,7 @@ services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 services.AddEndpointsApiExplorer();
 services.AddSwaggerGen();
+services.AddGrpc();
 
 const string DATABASE_CONNECTION_STRING_NAME = "PlatformsConn";
 services.AddDbContext<AppDbContext>((sp, opt) =>
@@ -48,23 +50,30 @@ builder.Host.UseNLog();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+app.UseRouting();
+app.UseAuthorization();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+    endpoints.MapGrpcService<GrpcPlatformService>();
+    endpoints.MapGet("protos/platforms.proto", async context =>
+    {
+        await context.Response.WriteAsync(File.ReadAllText("Protos/platforms.proto"));
+    });
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// Configure the HTTP request pipeline.
 app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
-app.MapControllers();
 
 PrepDb.PrepPopulation(app);
 
 app.Run();
-
 
 [SuppressMessage("ReSharper", "HeapView.PossibleBoxingAllocation")]
 public static class StartupExtensions
